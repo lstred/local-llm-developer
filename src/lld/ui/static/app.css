@@ -76,3 +76,6 @@ td.score-bad { color: var(--bad); }
 .log { max-height: 240px; }
 .event-line { display:block; }
 .event-kind { color: var(--accent); margin-right: 0.5rem; }
+
+.banner.warn { background:#3b2a14; color:#ffd699; padding:0.6rem 1rem; border-bottom:1px solid #6b4d22; font-size:0.9rem; }
+.banner code { background:#1a1a1a; padding:0.1rem 0.35rem; border-radius:3px; }

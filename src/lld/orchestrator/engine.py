@@ -249,6 +249,22 @@ class Engine:
         agent = build_agent(phase.agent, self.config.models, self.prompts)
         timeout = self.config.settings.execution.per_phase_timeout_seconds
 
+        # Pre-flight: confirm the model needed for this phase is available.
+        wanted_model = self.config.models.for_role(phase.agent).get("model", "")
+        try:
+            available = set(await self.manager.provider.list_available())
+        except Exception:  # noqa: BLE001 - probe must not crash run
+            available = set()
+        if available and not _model_present(wanted_model, available):
+            msg = (f"Required model '{wanted_model}' for role '{phase.agent}' "
+                   f"is not available from the provider. "
+                   f"Install it (e.g. `ollama pull {wanted_model}`) and retry.")
+            log.error("phase.model_missing",
+                      extra={"phase": phase.id, "agent": phase.agent,
+                             "model": wanted_model})
+            await self.store.finish_phase_run(run_id, status="failed", notes=msg)
+            raise RuntimeError(msg)
+
         try:
             result: AgentResult = await asyncio.wait_for(
                 agent.run(memory, self.manager, cycle=cycle),
@@ -421,3 +437,15 @@ class Engine:
 
 
 __all__ = ["Engine", "JobSpec", "JobOutcome"]
+
+
+def _model_present(wanted: str, available: set[str]) -> bool:
+    """Tolerate Ollama tag-aware naming (``foo`` matches ``foo:latest``)."""
+    if not wanted:
+        return True
+    if wanted in available:
+        return True
+    if ":" not in wanted and f"{wanted}:latest" in available:
+        return True
+    bare = wanted.split(":", 1)[0]
+    return any(a.split(":", 1)[0] == bare for a in available)

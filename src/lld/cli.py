@@ -177,6 +177,44 @@ def config() -> None:
     console.print_json(data=cfg.model_dump(mode="json"))
 
 
+@app.command()
+def models() -> None:
+    """List configured models and report which are missing locally."""
+    asyncio.run(_models())
+
+
+async def _models() -> None:
+    ctx = await build_app_context()
+    try:
+        available = sorted(await ctx.manager.provider.list_available())
+        loaded = await ctx.manager.provider.list_loaded()
+
+        table = Table(title="Configured models")
+        table.add_column("Role")
+        table.add_column("Model")
+        table.add_column("Status")
+        for role, missing in ctx.missing_models.items():
+            pass
+        for role, role_cfg in ctx.config.models.roles.items():
+            status = ("[red]MISSING[/red]"
+                      if role in ctx.missing_models else "[green]ok[/green]")
+            table.add_row(role, role_cfg.model, status)
+        console.print(table)
+
+        if ctx.missing_models:
+            console.print("\n[bold yellow]Missing models - install with:[/bold yellow]")
+            for model in sorted(set(ctx.missing_models.values())):
+                console.print(f"  ollama pull {model}")
+            raise typer.Exit(code=1)
+
+        console.print(f"\n[dim]Available locally ({len(available)}):[/dim] "
+                      + ", ".join(available))
+        if loaded:
+            console.print(f"[dim]Currently loaded:[/dim] " + ", ".join(loaded))
+    finally:
+        await ctx.close()
+
+
 def main() -> None:  # pragma: no cover
     app()
 

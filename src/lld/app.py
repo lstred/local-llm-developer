@@ -52,6 +52,11 @@ class AppContext:
     manager: ModelManager
     engine: Engine
     broadcaster: EventBroadcaster
+    missing_models: dict[str, str] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.missing_models is None:
+            self.missing_models = {}
 
     async def close(self) -> None:
         await self.manager.close()
@@ -87,6 +92,28 @@ async def build_app_context(config_dir: Path | str = "config") -> AppContext:
     )
     manager = ModelManager(provider)
 
+    # Verify configured per-role models are actually available locally.
+    # We don't fail startup - the user may pull missing models at runtime -
+    # but we log and stash the report so the API can surface it.
+    missing_models: dict[str, str] = {}
+    try:
+        available = set(await provider.list_available())
+        if available:  # only meaningful when we got a real listing
+            for role, role_cfg in config.models.roles.items():
+                if not _model_present(role_cfg.model, available):
+                    missing_models[role] = role_cfg.model
+        else:
+            log.warning("models.availability_unknown",
+                        extra={"reason": "provider returned empty listing"})
+    except Exception as exc:  # noqa: BLE001 - best-effort probe
+        log.warning("models.availability_check_failed",
+                    extra={"error": str(exc)})
+
+    if missing_models:
+        log.warning("models.missing",
+                    extra={"missing": missing_models,
+                           "hint": "Run `ollama pull <model>` for each."})
+
     # Broadcaster + engine
     broadcaster = EventBroadcaster()
     engine = Engine(config=config, manager=manager,
@@ -95,10 +122,24 @@ async def build_app_context(config_dir: Path | str = "config") -> AppContext:
 
     log.info("app.context_ready",
              extra={"provider": config.models.provider,
-                    "workspace_root": str(config.settings.storage.projects_root)})
+                    "workspace_root": str(config.settings.storage.projects_root),
+                    "missing_models": missing_models})
 
-    return AppContext(config=config, store=store, manager=manager,
-                      engine=engine, broadcaster=broadcaster)
+    ctx = AppContext(config=config, store=store, manager=manager,
+                     engine=engine, broadcaster=broadcaster,
+                     missing_models=missing_models)
+    return ctx
+
+
+def _model_present(wanted: str, available: set[str]) -> bool:
+    """Match Ollama's flexible naming: ``llama3.1`` matches ``llama3.1:latest``."""
+    if wanted in available:
+        return True
+    if ":" not in wanted and f"{wanted}:latest" in available:
+        return True
+    # Fallback: bare-name match (strip tag on either side).
+    bare = wanted.split(":", 1)[0]
+    return any(a.split(":", 1)[0] == bare for a in available)
 
 
 __all__ = ["AppContext", "EventBroadcaster", "build_app_context"]

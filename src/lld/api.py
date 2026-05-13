@@ -92,6 +92,21 @@ def create_app() -> FastAPI:
             "provider": ctx.config.models.provider,
             "provider_healthy": await ctx.manager.health(),
             "current_model": ctx.manager.current_model,
+            "missing_models": ctx.missing_models,
+        }
+
+    @app.get("/api/models")
+    async def models_status() -> dict[str, Any]:
+        ctx = _ctx_dep()
+        available = sorted(await ctx.manager.provider.list_available())
+        loaded = await ctx.manager.provider.list_loaded()
+        return {
+            "provider": ctx.config.models.provider,
+            "available": available,
+            "loaded": loaded,
+            "configured": {role: rc.model
+                           for role, rc in ctx.config.models.roles.items()},
+            "missing": ctx.missing_models,
         }
 
     @app.get("/api/config")

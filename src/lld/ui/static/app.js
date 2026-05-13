@@ -26,10 +26,32 @@ async function refreshHealth() {
       badge.textContent = `${data.provider} unreachable`;
       badge.className = "badge bad";
     }
+    renderMissingModels(data.missing_models || {});
   } catch (e) {
     $("#health-badge").textContent = "API down";
     $("#health-badge").className = "badge bad";
   }
+}
+
+function renderMissingModels(missing) {
+  let banner = document.getElementById("missing-models");
+  const entries = Object.entries(missing);
+  if (entries.length === 0) {
+    if (banner) banner.remove();
+    return;
+  }
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "missing-models";
+    banner.className = "banner warn";
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+  const uniq = [...new Set(entries.map(([, m]) => m))];
+  banner.innerHTML =
+    `<strong>Missing models:</strong> ` +
+    entries.map(([role, m]) => `<code>${role}=${m}</code>`).join(" ") +
+    `<br/><strong>Install with:</strong> ` +
+    uniq.map((m) => `<code>ollama pull ${m}</code>`).join(" &nbsp; ");
 }
 
 async function refreshJobs() {

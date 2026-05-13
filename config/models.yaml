@@ -25,49 +25,49 @@ defaults:
 # Per-role assignments. `model` = provider-specific identifier.
 roles:
   planner:
-    model: llama3.1:8b
+    model: qwen3:8b
     temperature: 0.3
     num_ctx: 8192
     num_predict: 6000
     system_style: deep_planning
 
   architect:
-    model: llama3.1:8b
+    model: qwen3:8b
     temperature: 0.2
     num_ctx: 12288
     num_predict: 8000
     system_style: deep_planning
 
   implementation:
-    model: deepseek-coder:6.7b
+    model: qwen2.5-coder:7b
     temperature: 0.1
     num_ctx: 16384
     num_predict: 8000
     system_style: implementation
 
   test:
-    model: deepseek-coder:6.7b
+    model: qwen2.5-coder:7b
     temperature: 0.1
     num_ctx: 16384
     num_predict: 6000
     system_style: implementation
 
   review:
-    model: mistral:7b
+    model: deepseek-r1:8b
     temperature: 0.3
     num_ctx: 12288
     num_predict: 8000
     system_style: critique
 
   security:
-    model: mistral:7b
+    model: deepseek-r1:8b
     temperature: 0.2
     num_ctx: 12288
     num_predict: 6000
     system_style: critique
 
   refactor:
-    model: deepseek-coder:6.7b
+    model: qwen2.5-coder:7b
     temperature: 0.15
     num_ctx: 16384
     num_predict: 8000
@@ -81,7 +81,7 @@ roles:
     system_style: documentation
 
   final_auditor:
-    model: mistral:7b
+    model: deepseek-r1:8b
     temperature: 0.2
     num_ctx: 16384
     num_predict: 8000

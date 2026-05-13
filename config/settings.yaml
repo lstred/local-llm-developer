@@ -1,0 +1,47 @@
+# Application-level settings (paths, server, logging).
+
+server:
+  host: 127.0.0.1
+  port: 8765
+  reload: false
+
+storage:
+  state_dir: ./state
+  database_url: sqlite+aiosqlite:///./state/orchestrator.db
+  projects_root: ./projects
+
+logging:
+  level: INFO
+  json: false
+  log_file: ./state/logs/orchestrator.log
+
+git:
+  enabled: true
+  auto_commit_per_phase: true
+  commit_author_name: local-llm-developer
+  commit_author_email: bot@local-llm-developer.local
+  branch_prefix: lld/
+
+execution:
+  # Hard wall-clock cap per phase (seconds). Quality > speed, but we still
+  # need a safety net against runaway generations.
+  per_phase_timeout_seconds: 3600
+  # If a model call fails (network/transport), retry with exponential backoff.
+  llm_call_retries: 3
+  llm_call_initial_backoff_seconds: 2
+
+verification:
+  # Tools the test phase will try to invoke if available on PATH.
+  # Missing tools are skipped (warning logged), never fatal.
+  python_test_command: ["pytest", "-x", "--tb=short", "-q"]
+  python_lint_command: ["ruff", "check", "."]
+  python_typecheck_command: ["mypy", "--ignore-missing-imports", "."]
+  node_test_command: ["npm", "test", "--silent"]
+  # Anti-lazy detector toggles
+  anti_lazy:
+    forbid_todo_comments: true
+    forbid_pass_only_bodies: true
+    forbid_notimplemented: true
+    forbid_placeholder_strings: true
+    forbid_empty_test_bodies: true
+    forbid_mock_unless_requested: true

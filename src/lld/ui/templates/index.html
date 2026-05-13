@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>local-llm-developer</title>
+  <link rel="stylesheet" href="/static/app.css" />
+</head>
+<body>
+  <header class="topbar">
+    <h1>local-llm-developer</h1>
+    <span id="health-badge" class="badge">checking...</span>
+  </header>
+
+  <main class="grid">
+    <section class="panel" id="new-job-panel">
+      <h2>New Job</h2>
+      <label for="task">Task description</label>
+      <textarea id="task" rows="6"
+                placeholder="Build a CLI todo app with SQLite persistence and full test coverage."></textarea>
+      <label for="workspace-name">Workspace name (optional)</label>
+      <input id="workspace-name" type="text" placeholder="my-cool-project" />
+      <button id="start-btn" type="button">Start full pipeline</button>
+      <p class="hint">
+        Quality-first execution. Expect 20+ minutes per job. Only one model
+        will be resident in VRAM at any time.
+      </p>
+    </section>
+
+    <section class="panel" id="jobs-panel">
+      <h2>Jobs</h2>
+      <ul id="jobs-list"></ul>
+    </section>
+
+    <section class="panel wide" id="job-detail-panel">
+      <h2>Job Detail</h2>
+      <div id="job-summary">Select a job to view details.</div>
+      <h3>Phases</h3>
+      <table id="phases-table">
+        <thead>
+          <tr>
+            <th>Phase</th><th>Agent</th><th>Cycle</th>
+            <th>Status</th><th>Score</th><th>Started</th><th>Finished</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <h3>Artifacts</h3>
+      <ul id="artifacts-list"></ul>
+      <pre id="artifact-view" class="artifact-view"></pre>
+    </section>
+
+    <section class="panel wide" id="live-panel">
+      <h2>Live Events</h2>
+      <pre id="live-events" class="log"></pre>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

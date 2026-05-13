@@ -1,0 +1,80 @@
+# Default workflow: full sequential pipeline with review loops.
+#
+# Each phase runs ONE agent. Phases execute strictly in order.
+# A phase can trigger conditional retries / repair loops based on its
+# quality gates.
+
+name: full_pipeline
+description: >
+  Plan -> Architect -> Implement -> Test -> Review -> Security ->
+  Refactor -> Document -> Final Audit, with bounded review loops.
+
+# Global gates
+quality:
+  min_review_score: 7        # 0-10; below this triggers refactor loop
+  min_audit_score: 8
+  max_review_cycles: 3       # hard cap on review<->refactor iterations
+  max_test_repair_cycles: 4  # hard cap on test failure -> repair iterations
+  fail_on_anti_lazy: true    # placeholder/TODO/pass detector blocks progression
+
+phases:
+  - id: plan
+    agent: planner
+    inputs: [TASK.md]
+    outputs: [PLAN.md, handoffs/plan_to_architect.md]
+    gates: [non_empty, structured_sections]
+
+  - id: architect
+    agent: architect
+    inputs: [TASK.md, PLAN.md, handoffs/plan_to_architect.md]
+    outputs: [ARCHITECTURE.md, handoffs/architect_to_impl.md]
+    gates: [non_empty, structured_sections, mentions_contracts]
+
+  - id: implement
+    agent: implementation
+    inputs: [TASK.md, PLAN.md, ARCHITECTURE.md, handoffs/architect_to_impl.md]
+    outputs: [src/**, IMPLEMENTATION_LOG.md, handoffs/impl_to_test.md]
+    gates: [no_anti_lazy, syntactic_validity]
+
+  - id: test
+    agent: test
+    inputs: [src/**, ARCHITECTURE.md, handoffs/impl_to_test.md]
+    outputs: [tests/**, TEST_RESULTS.md, handoffs/test_to_review.md]
+    gates: [tests_executed, no_anti_lazy]
+    repair_loop:
+      on_failure: implement     # loop back if tests fail
+      max_cycles: 4
+
+  - id: review
+    agent: review
+    inputs: [src/**, tests/**, ARCHITECTURE.md, TEST_RESULTS.md]
+    outputs: [REVIEW.md, handoffs/review_to_refactor.md]
+    gates: [scored, actionable]
+
+  - id: security
+    agent: security
+    inputs: [src/**, ARCHITECTURE.md]
+    outputs: [SECURITY.md, handoffs/security_to_refactor.md]
+    gates: [scored]
+
+  - id: refactor
+    agent: refactor
+    inputs: [src/**, REVIEW.md, SECURITY.md,
+             handoffs/review_to_refactor.md, handoffs/security_to_refactor.md]
+    outputs: [src/**, IMPLEMENTATION_LOG.md, handoffs/refactor_to_review.md]
+    gates: [no_anti_lazy, syntactic_validity]
+    repair_loop:
+      on_low_score: review        # re-review until threshold or cap
+      max_cycles: 3
+
+  - id: document
+    agent: documentation
+    inputs: [src/**, ARCHITECTURE.md, README.md]
+    outputs: [README.md, docs/**, handoffs/doc_to_audit.md]
+    gates: [non_empty]
+
+  - id: audit
+    agent: final_auditor
+    inputs: ["**"]
+    outputs: [AUDIT.md]
+    gates: [scored, blocking]

@@ -1,0 +1,16 @@
+services:
+  local-llm-developer:
+    build: .
+    image: local-llm-developer:latest
+    container_name: local-llm-developer
+    ports:
+      - "8765:8765"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      LLD_OLLAMA_HOST: "http://host.docker.internal:11434"
+    volumes:
+      - ./state:/data/state
+      - ./projects:/data/projects
+      - ./config:/app/config:ro
+    restart: unless-stopped

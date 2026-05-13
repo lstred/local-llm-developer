@@ -1,0 +1,88 @@
+# Model assignment per agent role.
+#
+# All models are loaded via the configured `provider` (ollama | llamacpp).
+# Only ONE model is resident in VRAM at any given time; the model_manager
+# unloads the previous model before loading the next.
+#
+# The defaults below target an 8 GB VRAM laptop (RTX 3070).
+# Override per-role to experiment.
+
+provider: ollama          # ollama | llamacpp
+ollama_host: http://127.0.0.1:11434
+llamacpp_models_dir: ./models
+
+# Global generation defaults; agents may override.
+defaults:
+  temperature: 0.2
+  top_p: 0.9
+  num_ctx: 8192            # context window
+  num_predict: 4096        # max output tokens
+  repeat_penalty: 1.05
+  seed: 0                  # 0 = random; set non-zero for reproducibility
+  # Memory hygiene
+  keep_alive: 0            # seconds the model stays warm after a call (0 = unload immediately)
+
+# Per-role assignments. `model` = provider-specific identifier.
+roles:
+  planner:
+    model: qwen3:8b
+    temperature: 0.3
+    num_ctx: 8192
+    num_predict: 6000
+    system_style: deep_planning
+
+  architect:
+    model: qwen3:8b
+    temperature: 0.2
+    num_ctx: 12288
+    num_predict: 8000
+    system_style: deep_planning
+
+  implementation:
+    model: qwen2.5-coder:7b
+    temperature: 0.1
+    num_ctx: 16384
+    num_predict: 8000
+    system_style: implementation
+
+  test:
+    model: qwen2.5-coder:7b
+    temperature: 0.1
+    num_ctx: 16384
+    num_predict: 6000
+    system_style: implementation
+
+  review:
+    model: deepseek-r1:8b
+    temperature: 0.3
+    num_ctx: 12288
+    num_predict: 8000
+    system_style: critique
+
+  security:
+    model: deepseek-r1:8b
+    temperature: 0.2
+    num_ctx: 12288
+    num_predict: 6000
+    system_style: critique
+
+  refactor:
+    model: qwen2.5-coder:7b
+    temperature: 0.15
+    num_ctx: 16384
+    num_predict: 8000
+    system_style: implementation
+
+  documentation:
+    model: phi4-mini
+    temperature: 0.3
+    num_ctx: 8192
+    num_predict: 4000
+    system_style: documentation
+
+  final_auditor:
+    model: deepseek-r1:8b
+    temperature: 0.2
+    num_ctx: 16384
+    num_predict: 8000
+    system_style: critique

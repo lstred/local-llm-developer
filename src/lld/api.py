@@ -87,12 +87,13 @@ def create_app() -> FastAPI:
     @app.get("/api/health")
     async def health() -> dict[str, Any]:
         ctx = _ctx_dep()
+        missing = await ctx.refresh_missing_models()
         return {
             "ok": True,
             "provider": ctx.config.models.provider,
             "provider_healthy": await ctx.manager.health(),
             "current_model": ctx.manager.current_model,
-            "missing_models": ctx.missing_models,
+            "missing_models": missing,
         }
 
     @app.get("/api/models")

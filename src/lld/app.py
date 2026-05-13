@@ -58,6 +58,20 @@ class AppContext:
         if self.missing_models is None:
             self.missing_models = {}
 
+    async def refresh_missing_models(self) -> dict[str, str]:
+        """Re-probe the provider and update ``missing_models`` in place."""
+        result: dict[str, str] = {}
+        try:
+            available = set(await self.manager.provider.list_available())
+        except Exception:  # noqa: BLE001 - probe must never raise
+            available = set()
+        if available:
+            for role, role_cfg in self.config.models.roles.items():
+                if not _model_present(role_cfg.model, available):
+                    result[role] = role_cfg.model
+        self.missing_models = result
+        return result
+
     async def close(self) -> None:
         await self.manager.close()
         await self.store.close()

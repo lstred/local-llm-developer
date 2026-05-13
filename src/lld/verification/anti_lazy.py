@@ -237,12 +237,13 @@ class AntiLazyDetector:
     def _is_trivial_test_body(body: list[ast.stmt]) -> bool:
         if not body:
             return True
-        # Must contain at least one assert OR a call expression that isn't pass.
-        for n in body:
-            if isinstance(n, ast.Assert):
-                return False
-            if isinstance(n, ast.Expr) and isinstance(n.value, ast.Call):
-                return False
+        # Walk the entire body subtree: a real test must contain at least one
+        # assertion, raise, or call (covers `assert x`, `with pytest.raises(...):`,
+        # `self.assertEqual(...)`, `await client.get(...)`, etc.).
+        for stmt in body:
+            for n in ast.walk(stmt):
+                if isinstance(n, (ast.Assert, ast.Raise, ast.Call)):
+                    return False
         return True
 
 

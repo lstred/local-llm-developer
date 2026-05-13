@@ -26,16 +26,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable
 
-from .agents import AgentResult, build_agent
-from .agents.parsing import extract_score, extract_verdict
-from .config import AppConfig, PhaseConfig
-from .git_integration import GitRecorder
-from .logging_setup import get_logger
-from .memory import ProjectMemory
-from .models import ModelManager
-from .persistence import StateStore
-from .prompts import PromptLibrary
-from .verification import AntiLazyDetector, VerificationRunner
+from ..agents import AgentResult, build_agent
+from ..agents.parsing import extract_score, extract_verdict
+from ..config import AppConfig, PhaseConfig
+from ..git_integration import GitRecorder
+from ..logging_setup import get_logger
+from ..memory import ProjectMemory
+from ..models import ModelManager
+from ..persistence import StateStore
+from ..prompts import PromptLibrary
+from ..verification import AntiLazyDetector, VerificationRunner
 
 log = get_logger(__name__)
 

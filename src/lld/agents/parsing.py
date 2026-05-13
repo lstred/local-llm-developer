@@ -47,6 +47,7 @@ class FileBlock:
 def parse_file_blocks(text: str) -> list[FileBlock]:
     """Extract every ``### FILE: ...`` + fenced code block from ``text``."""
     out: list[FileBlock] = []
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
     for m in _FILE_BLOCK_RX.finditer(text):
         path = m.group("path").strip().strip("`'\"")
         body = m.group("body")
